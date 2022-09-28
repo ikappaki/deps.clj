@@ -41,7 +41,10 @@
 "))
 
 (def bat-script
-  (str bat-shebang
-       script))
+  "The clj script wrapped in a .bat file."
+  (->> (str bat-shebang
+            script)
+       str/split-lines
+       (str/join "\r\n")))
 
 (spit "deps.bat" bat-script)
