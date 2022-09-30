@@ -36,7 +36,7 @@ build_script:
 
     call script/compile.bat
 
-run-tests:
+run-tests: >-
   call script/exe_test.bat
   
 artifacts:
