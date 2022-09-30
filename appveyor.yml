@@ -36,10 +36,9 @@ build_script:
 
     call script/compile.bat
 
-- run-tests: >-
-    echo ":running tests"
+test_script:
+- cmd: >-
     call script/exe_test.bat
-    echo ":done"
     
 artifacts:
 - path: deps.clj-*-windows-amd64.zip
