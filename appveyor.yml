@@ -20,14 +20,10 @@ build_script:
 
     call lein self-install
 
-    powershell -Command iwr get.scoop.sh -outfile 'install.ps1'; .\install.ps1 -RunAsAdmin; scoop help
+    powershell -Command iwr get.scoop.sh -outfile 'install.ps1'; .\install.ps1 -RunAsAdmin; scoop help; scoop bucket add scoop-clojure https://github.com/littleli/scoop-clojure; scoop bucket add extras; scoop install babashka
 
-    scoop bucket add scoop-clojure https://github.com/littleli/scoop-clojure
-
-    scoop bucket add extras
-
-    scoop install babashka
-
+    bb --version
+    
 - cmd: >-
     call lein do clean, uberjar
 
