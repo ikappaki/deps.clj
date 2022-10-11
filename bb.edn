@@ -3,7 +3,8 @@
  :tasks
  {:requires [[babashka.deps :as deps]
              [babashka.fs :as fs]
-             [babashka.process :as p]]
+             [babashka.process :as p]
+             [clojure.string :as str]]
 
   compile tasks/compile-native
 
@@ -15,9 +16,8 @@
   babashka-test {:doc "Run tests with bb calling to bb deps lib."
                  :task (let [bb (str \" (.get (.command (.info (java.lang.ProcessHandle/current)))) \")]
                          (do
-                           (println :bb bb)
                            (p/shell {:extra-env {"DEPS_CLJ_TEST_ENV" "babashka"}}
-                                    bb "-cp" "src;test;resources"
+                                    bb "-cp" (str/join fs/path-separator ["src" "test" "resources"])
                                     "-e" "(require '[clojure.test :as t] '[borkdude.deps-test])"
                                     "-e" "(let [{:keys [:fail :error]} (t/run-tests 'borkdude.deps-test)] (System/exit (+ fail error)))")))}
 
