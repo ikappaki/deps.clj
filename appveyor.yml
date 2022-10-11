@@ -20,10 +20,11 @@ build_script:
 
     call lein self-install
 
-    powershell -Command iwr get.scoop.sh -outfile 'install.ps1'; .\install.ps1 -RunAsAdmin; scoop help; scoop bucket add scoop-clojure https://github.com/littleli/scoop-clojure; scoop bucket add extras; scoop install babashka
+- cmd: >-
+    powershell -Command "if (Test-Path('bb.exe')) { return } else { (New-Object Net.WebClient).DownloadFile('https://github.com/babashka/babashka/releases/download/v0.9.162/babashka-0.9.162-windows-amd64.zip', 'bb.zip') }"
 
-    bb --version
-    
+    powershell -Command "if (Test-Path('bb.exe')) { return } else { Expand-Archive bb.zip . }"
+
 - cmd: >-
     call lein do clean, uberjar
 
