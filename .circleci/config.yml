@@ -222,10 +222,10 @@ jobs:
   #         name: Build Docker image
   #         command: .circleci/script/docker
 
-workflows:
-  version: 2
-  ci:
-    jobs:
+# workflows:
+#   version: 2
+#   ci:
+#     jobs:
       # - jvm
       - babashka
       # - linux

@@ -20,6 +20,12 @@ build_script:
 
     call lein self-install
 
+    # babashka
+    Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
+    scoop bucket add scoop-clojure https://github.com/littleli/scoop-clojure
+    scoop bucket add extras
+    scoop install babashka
+
 - cmd: >-
     call lein do clean, uberjar
 
@@ -34,11 +40,11 @@ build_script:
 
     powershell -Command "if (Test-Path('graalvm')) { return } else { Expand-Archive graalvm.zip graalvm }"
 
-    call script/compile.bat
+    bb compile
 
 test_script:
 - cmd: >-
-    call script/exe_test.bat
+    bb exe-test
     
 artifacts:
 - path: deps.clj-*-windows-amd64.zip
