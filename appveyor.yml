@@ -20,11 +20,7 @@ build_script:
 
     call lein self-install
 
-    powershell -Command iwr get.scoop.sh -outfile 'install.ps1'
-
-    powershell -File .\install.ps1 -RunAsAdmin
-
-    powershell -Command scoop help
+    powershell -Command iwr get.scoop.sh -outfile 'install.ps1'; .\install.ps1 -RunAsAdmin; scoop help
 
     scoop bucket add scoop-clojure https://github.com/littleli/scoop-clojure
 
