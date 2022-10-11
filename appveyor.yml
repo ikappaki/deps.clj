@@ -20,7 +20,6 @@ build_script:
 
     call lein self-install
 
-    # babashka
     Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
     scoop bucket add scoop-clojure https://github.com/littleli/scoop-clojure
     scoop bucket add extras
