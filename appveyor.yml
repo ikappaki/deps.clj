@@ -20,7 +20,9 @@ build_script:
 
     call lein self-install
 
-    powershell -Command "Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')"
+    powershell -Command iwr get.scoop.sh -outfile 'install.ps1'
+
+    powershell -File .\install.ps1 -RunAsAdmin
 
     scoop bucket add scoop-clojure https://github.com/littleli/scoop-clojure
 
