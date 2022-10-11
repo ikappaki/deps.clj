@@ -24,6 +24,8 @@ build_script:
 
     powershell -File .\install.ps1 -RunAsAdmin
 
+    powershell -Command scoop help
+
     scoop bucket add scoop-clojure https://github.com/littleli/scoop-clojure
 
     scoop bucket add extras
