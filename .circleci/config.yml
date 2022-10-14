@@ -76,11 +76,10 @@ jobs:
           name: Install <<parameters.jdk>>
           command: |
             HOMEBREW_NO_AUTO_UPDATE=1 brew install <<parameters.jdk>>
-
       - run:
           name: Install Clojure
           command: |
-            HOMEBREW_NO_AUTO_UPDATE=1 brew install clojure/tools/clojure
+            .circleci/script/install-clojure /usr/local
       - run:
           name: Install babashka
           command: |
@@ -249,26 +248,27 @@ workflows:
   version: 2
   ci:
     jobs:
-      - linux-test-and-uberjar:
-          matrix:
-            parameters:
-              jdk: ["openjdk-8.0", "openjdk-11.0", "openjdk-17.0"]
-              uberjar-jdk: ["openjdk-8.0"]
+      # - linux-test-and-uberjar:
+      #     matrix:
+      #       parameters:
+      #         jdk: ["openjdk-8.0", "openjdk-11.0", "openjdk-17.0"]
+      #         jdk: ["openjdk-8.0", "openjdk-11.0", "openjdk-17.0"]
+      #         uberjar-jdk: ["openjdk-8.0"]
       - mac-test:
           matrix:
             parameters:
-              jdk: ["openjdk@8", "openjdk@11", "openjdk@17"]
-      - linux-native
-      - mac-native
-      - deploy:
-          filters:
-            branches:
-              only: master
-          requires:
-            - linux-test-and-uberjar
-            - mac-test
-            - linux-native
-            - mac-native
+              jdk: ["openjdk@8"]
+      # - linux-native
+      # - mac-native
+      # - deploy:
+      #     filters:
+      #       branches:
+      #         only: master
+      #     requires:
+      #       - linux-test-and-uberjar
+      #       - mac-test
+      #       - linux-native
+      #       - mac-native
       # - docker:
       #     filters:
       #       branches:
