@@ -54,7 +54,9 @@ for:
 
         where java
 
-        dir "%JAVA_HOME"
+        echo %PATH%
+
+        dir "%JAVA_HOME%"
         
         java -version
         
