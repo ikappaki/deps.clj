@@ -10,16 +10,16 @@ environment:
   GRAALVM_HOME: C:\projects\deps.clj\graalvm\graalvm-ce-java11-20.3.0
 
   matrix:
-    - JDK: 1.8
-      grp: test
-      JAVA_HOME: C:\Program Files\Java\jdk1.8.0
-    - JDK: 11
-      grp: test
-      JAVA_HOME: C:\Program Files\Java\jdk11
+    # - JDK: 1.8
+    #   grp: test
+    #   JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+    # - JDK: 11
+    #   grp: test
+    #   JAVA_HOME: C:\Program Files\Java\jdk11
     - JDK: 17
       grp: test
       JAVA_HOME: C:\Program Files\Java\jdk17
-    - JDK: GraalVM      
+    # - JDK: GraalVM      
 
 cache:
   - C:\ProgramData\chocolatey\lib -> project.clj, appveyor.yml
@@ -52,6 +52,8 @@ for:
         
         SET PATH=%JAVA_HOME%\bin;%PATH%
 
+        java -version
+        
         bb jvm-test
 
         bb babashka-test
