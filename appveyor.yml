@@ -50,7 +50,7 @@ for:
     - cmd: >-
         echo :JAVA_HOME %JAVA_HOME%
         
-        SET PATH=%JAVA_HOME%\bin;%PATH%
+        SET PATH="%JAVA_HOME%"\bin;%PATH%
 
         java -version
         
