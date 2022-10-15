@@ -52,6 +52,10 @@ for:
         
         SET PATH="%JAVA_HOME%"\bin;%PATH%
 
+        where java
+
+        dir "%JAVA_HOME"
+        
         java -version
         
         bb jvm-test
