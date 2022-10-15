@@ -56,7 +56,7 @@ for:
 
         echo %PATH%
 
-        dir "%JAVA_HOME%"
+        dir "C:\Program Files\Java\jdk17"
         
         java -version
         
