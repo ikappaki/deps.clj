@@ -4,7 +4,8 @@
    [clojure.string :as str])
   (:import [java.lang ProcessBuilder$Redirect]
            [java.net URL HttpURLConnection]
-           [java.nio.file Files FileSystems Path CopyOption])
+           [java.nio.file Files FileSystems Path CopyOption]
+           [java.util Base64])
   (:gen-class))
 
 (set! *warn-on-reflection* true)
@@ -12,7 +13,7 @@
 
 ;; see https://github.com/clojure/brew-install/blob/1.10.3/CHANGELOG.md
 (def version (delay (or (System/getenv "DEPS_CLJ_TOOLS_VERSION")
-                        "1.11.1.1165")))
+                       "1.11.1.1165")))
 
 (def deps-clj-version
   (-> (io/resource "DEPS_CLJ_VERSION")
@@ -258,8 +259,8 @@ For more info, see:
   (let [dir (io/file deps-clj-config-dir)
         zip (io/file deps-clj-config-dir "tools.zip")]
     (.mkdirs dir)
-    (download (format "https://download.clojure.org/install/clojure-tools-%s.zip" @version)
-              zip)
+    ;; (download (format "https://download.clojure.org/install/clojure-tools-%s.zip" @version)
+    ;;           zip)
     (unzip zip (.getPath dir))
     (.delete zip))
   (warn "Successfully installed clojure tools!"))
@@ -446,6 +447,8 @@ For more info, see:
               (throw (Exception. "Couldn't find 'java'. Please set JAVA_HOME."))))
           java-cmd))))
 
+(declare ClojureToolsDownloader.jar)
+
 (defn -main [& command-line-args]
   (let [opts (parse-args command-line-args)
         java-cmd (get-java-cmd)
@@ -469,11 +472,26 @@ For more info, see:
                            (format "clojure-tools-%s.jar" @version))
         exec-jar (io/file libexec-dir "exec.jar")
         proxy-settings (jvm-proxy-settings) ;; side effecting, sets java proxy properties for download
+        clj-jvm-opts (some-> (*getenv-fn* "CLJ_JVM_OPTS") (str/split #" "))
+        down-jar (let [down-jar (io/file tools-dir "ClojureToolsDownloader.jar")]
+                   (when-not (.exists down-jar)
+                     ;; create parent dir if does not exists
+                     (println :td tools-dir :x (.getCanonicalPath (io/file down-jar "..")))
+                     (clojure.java.io/make-parents (.getCanonicalPath (io/file down-jar "..")) ".")
+                     (with-open [xout (io/output-stream down-jar)]
+                       (.write xout (.decode (Base64/getDecoder) ^String ClojureToolsDownloader.jar))))
+                   (str (.getPath down-jar)))
+        _ (println :down-jar down-jar)
         tools-cp
         (or
          (when (.exists tools-jar) (.getPath tools-jar))
          (binding [*out* *err*]
            (warn "Clojure tools not yet in expected location:" (str tools-jar))
+           (shell-command (vec (concat [java-cmd]
+                                       clj-jvm-opts
+                                       proxy-settings
+                                       ["-Xms256m" "-classpath" down-jar "borkdude.ClojureToolsDownloader"
+                                        @version (str tools-dir)])))
            (clojure-tools-jar-download tools-dir)
            tools-jar))
         mode (:mode opts)
@@ -484,7 +502,6 @@ For more info, see:
         deps-edn
         (or (:deps-file opts)
             (.getPath (io/file *dir* "deps.edn")))
-        clj-jvm-opts (some-> (*getenv-fn* "CLJ_JVM_OPTS") (str/split #" "))
         clj-main-cmd
         (vec (concat [java-cmd]
                      clj-jvm-opts
@@ -718,3 +735,6 @@ For more info, see:
                            (pos? (count (:args opts))))
                   (warn "WARNING: Implicit use of clojure.main with options is deprecated, use -M"))
                 (*process-fn* main-args)))))))
+
+
+(def ClojureToolsDownloader.jar "UEsDBAoAAAAAAGCwUFUAAAAAAAAAAAAAAAAJACQAYm9ya2R1ZGUvCgAgAAAAAAABABgAQH80raLh2AFAfzStouHYAUB/NK2i4dgBUEsDBBQACAgIAGCwUFUAAAAAAAAAAAAAAAAaACQAYm9ya2R1ZGUvSmFyRG93bmxvYWQuY2xhc3MKACAAAAAAAAEAGAAA2vasouHYAZBCNa2i4dgBkEI1raLh2AGNVdtTG1UY/x2SsGFZCk2hkCJ1acUGJFlLaSsbQAsUBcNFoFjaOnpIDmFh2Y27Gy6+6KPjg3+Azuhjn9uHgDLti299dXxwxvHF8UH/AccZb9/mQoPESyY5J+fy+77fdz1P/vjyMYBB7MqoQ0BCUEEI9QwtG3ybaya3strc6oZIewz1w4ZleKMMgVjvcgPCaJAgK2iEcuz64p7riS26JRyHoS1VPDFsbd4xLG/RcwTfSoZximFxmjsT9o5l2jyj0mXb0dV5U3BXqG4+lzP31FXbW1fTpr2Rd0Tcs23TVbeF4xq2pXIro2Yq4IzhEEPb2UvIaMFpCREFZ9DKcKaGcgYp569Mi9jFUlXEPdrOJnuXJZw9blHxQEYHohLOKejEMxXRFsleM0yhzXNv3SWjs4I8lawh9m4NTamTMpISzjN0HD9IGdbmXM4ju2Wo6JZwQcFFPHeCxCQNRKLRcCcqHmEYiNVSczf1TyqSvXckPM/Q/ne+Y3nDzAhHRg8CYfQyDNYI4IRwPcPivqCnYVEt21PX7LyV0VUf/oKCfsQpo3guJ6wMQ7xWHE5slQkkfRGaghdxmSHs2aVDhtbYSQi58wqdrNrOZiafEVoV4zCuMgyte17O1TWtkkuJcrolbCerGZbrcdPUjqVgvMdNvGfkZLThuoKXMER2rNnOFqfAD/1H4EulVMM04plkUEoxEZ52ayElQ8eIX42tfq29rOAVv9ACdt4LY4xB1au9r1f4kyyimUgkVB8/oeAmJhlkm/xcSf/2ip8o9lNWLl8pShmvYUrCtILXkWI4d5Qg6XVuWcJ0tfHyHxJoiZ3yimE0VlNeVXofSVgQPMNXTTG254kynprBLEND0be+YxsxD03CGwyRk3kbxiIxO2a6y7d9o7nrGy3hVqV6CObXw1zeO6IkYwkj/nBbwQrukBlUrkdmdMdqMfZlVJhKuMdw6mnsUraVDb3/Z+kj4x1wCasK0qCU7vpXURRrz+GWuyacScemoPTH/qe3pqd7pyWsVfW2qbmbu2lRbg8C6woMv4M350o9j6c3lxyeFjJl0aYCE6QtKHYNStdgbKp3mXzvOunJcgZHTqYmQ9O47VeC5S1zMy8IN25naGqmpiFm81urwlnyadLBFjeorZ6N1ep2pKmpSGeG58r35UU776SF7xjquFVRTfhwdGOAXiWAQg4LNs05WtXRc1VH/+mdovFd2umimdEc6tsHe1AEODTWFzdPowEuvNJV9iHtyrT7c2C473Hoc7Q8hBRpKqA5OHwfX/cFBmb6ggOz8cAjtB2gnaauAzz7Cbrp2iF6VvZxKRIroC9OvwIShAsR7tPIYPAR6lYC/YsHuKYHD6GvRIP7GNZDDzFawd04houGChg/wKt6fZywbSuByAyB27/AHIMuVcEWCBKVjnCHWFqJSvtY1sPRcAFv6g3FKVrf0Iq3Cnj79n0oejAaLCBbP9x5gI0HZPkMvsV3lBt1Rb+sIUpjlFadlBNd9GSep2Z2gXYu0op6Ky5RK4gRKo57SCBLrfYDXMZHuILPyPkHuIqvcA1PqPt9gyGSPUrSdXyPYfyAEfyIG/gJY8iTlg4Ef0Mb+x3XJbTR9xd8LEH8SnoZtovB3PkLUEsHCJF76tO6BAAAhAgAAFBLAwQKAAAAAABgsFBVAAAAAAAAAAAAAAAACQAkAE1FVEEtSU5GLwoAIAAAAAAAAQAYAKBpNa2i4dgBoGk1raLh2AGgaTWtouHYAVBLAwQUAAgICABgsFBVAAAAAAAAAAAAAAAAFAAkAE1FVEEtSU5GL01BTklGRVNULk1GCgAgAAAAAAABABgAkEI1raLh2AGgaTWtouHYAaBpNa2i4dgB803My0xLLS7RDUstKs7Mz7NSMNQz4HIqzcwp0XWqtFJISS0oLkksAouk6HqlZAMVAFXoGZpx+SZm5uk65yQWF1speCUWueSX5+XkJ6ZwAQBQSwcIrhUe91AAAABTAAAAUEsBAgoACgAAAAAAYLBQVQAAAAAAAAAAAAAAAAkAJAAAAAAAAAAAAAAAAAAAAGJvcmtkdWRlLwoAIAAAAAAAAQAYAEB/NK2i4dgBQH80raLh2AFAfzStouHYAVBLAQIUABQACAgIAGCwUFWRe+rTugQAAIQIAAAaACQAAAAAAAAAAAAAAEsAAABib3JrZHVkZS9KYXJEb3dubG9hZC5jbGFzcwoAIAAAAAAAAQAYAADa9qyi4dgBkEI1raLh2AGQQjWtouHYAVBLAQIKAAoAAAAAAGCwUFUAAAAAAAAAAAAAAAAJACQAAAAAAAAAAAAAAHEFAABNRVRBLUlORi8KACAAAAAAAAEAGACgaTWtouHYAaBpNa2i4dgBoGk1raLh2AFQSwECFAAUAAgICABgsFBVrhUe91AAAABTAAAAFAAkAAAAAAAAAAAAAAC8BQAATUVUQS1JTkYvTUFOSUZFU1QuTUYKACAAAAAAAAEAGACQQjWtouHYAaBpNa2i4dgBoGk1raLh2AFQSwUGAAAAAAQABACIAQAAcgYAAAAA")
