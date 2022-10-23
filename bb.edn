@@ -24,29 +24,6 @@
             :task (p/shell {:extra-env {"DEPS_CLJ_TEST_ENV" "native"}}
                            (if (fs/windows?) "./deps.exe" "./deps") "-M:test")}
 
-  java-compile (let [class-name "ClojureToolsDownloader"
-                     java-path  (str  "java/src/borkdude/" class-name ".java")
-                     classes-dir "classes"
-                     jar-name (str class-name ".jar")
-                     bb (str \" (.get (.command (.info (java.lang.ProcessHandle/current)))) \")]
-                 (do (when-not (fs/exists? classes-dir) (fs/create-dir classes-dir))
-                     (p/shell "javac" "--source" 8 "--target" 8 "-d" classes-dir java-path)
-                     (p/shell bb "-cp" classes-dir "uberjar" jar-name  "-m" class-name)))
-
-  tools-downloader-embed (let [class-name "ClojureToolsDownloader"
-                               jar-name (str class-name ".jar")
-                               jar-path (str (fs/path "." jar-name))
-                               deps-path "./deps.clj"
-                               deps.clj (slurp deps-path)
-                               encoder (java.util.Base64/getEncoder)
-                               encoded (with-open [xin (clojure.java.io/input-stream jar-path)
-                                                   xout (java.io.ByteArrayOutputStream.)]
-                                         (clojure.java.io/copy xin xout)
-                                         (.encodeToString encoder (.toByteArray xout)))]
-                           ;;(println :dc deps.clj)
-                           (->> (str/replace deps.clj (re-pattern (str "\\(def " (str/re-quote-replacement jar-name) " \"(\\w+)\"\\)"))
-                                             (str "(def " jar-name " \"" encoded "\")"))
-                                (spit deps-path)))
   jvm-clj-test {:doc "Run tests with clojure calling to clojure deps lib."
                 :task (-> (deps/clojure '[-M:test])
                           p/check)}
