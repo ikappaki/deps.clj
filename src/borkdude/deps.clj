@@ -4,8 +4,7 @@
    [clojure.string :as str])
   (:import [java.lang ProcessBuilder$Redirect]
            [java.net URL URLConnection HttpURLConnection]
-           [java.nio.file Files FileSystems Path CopyOption]
-           [java.util Base64])
+           [java.nio.file Files FileSystems Path CopyOption])
   (:gen-class))
 
 (set! *warn-on-reflection* true)
