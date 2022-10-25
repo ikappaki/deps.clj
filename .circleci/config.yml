@@ -72,7 +72,7 @@ jobs:
           command: |
             curl -sLO https://raw.githubusercontent.com/babashka/babashka/master/install
             chmod +x ./install
-            ./install --version 1.0.165-SNAPSHOT
+            sudo ./install --version 1.0.165-SNAPSHOT
 
       - run:
           name: Run babashka tests
